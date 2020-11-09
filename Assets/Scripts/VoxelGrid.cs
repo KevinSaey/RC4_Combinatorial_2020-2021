@@ -5,9 +5,6 @@ using UnityEngine;
 
 public class VoxelGrid
 {
-    //This is the voxelgrid singleton instance. There is only on object of
-    //Voxelgrid in the scene and it can be refered to in the entire solutionto using "VoxelGrid.Instance" 
-    public static VoxelGrid Instance;
     public static Voxel[,,] Voxels;
     public Vector3Int GridDimensions;
 
@@ -36,7 +33,6 @@ public class VoxelGrid
     /// </summary>
     private List<Block> _currentBlocks => _blocks.Where(b => b.State != BlockState.Placed).ToList();
 
-    private readonly List<Pattern> _patterns;
     private readonly List<Block> _blocks = new List<Block>();
     private PatternType _currentPattern = PatternType.PatternA;
 
@@ -71,7 +67,7 @@ public class VoxelGrid
     /// <summary>
     /// Generate the voxelgrid
     /// </summary>
-    void CreateVoxelGrid()
+    private void CreateVoxelGrid()
     {
         Voxels = new Voxel[GridDimensions.x, GridDimensions.y, GridDimensions.z];
         for (int x = 0; x < GridDimensions.x; x++)
@@ -80,7 +76,7 @@ public class VoxelGrid
             {
                 for (int z = 0; z < GridDimensions.z; z++)
                 {
-                    Voxels[x, y, z] = new Voxel(new Vector3Int(x, y, z), _goVoxelPrefab);
+                    Voxels[x, y, z] = new Voxel(new Vector3Int(x, y, z), _goVoxelPrefab, this);
                 }
             }
         }
@@ -90,10 +86,10 @@ public class VoxelGrid
     /// </summary>
     /// <param name="anchor">The voxel where the pattern will start building from index(0,0,0) in the pattern</param>
     /// <param name="rotation">The rotation for the current block. This will be rounded to the nearest x,y or z axis</param>
-    public void AddBlock(Vector3Int anchor, Quaternion rotation) => _blocks.Add(new Block(_currentPattern, anchor, rotation));
+    public void AddBlock(Vector3Int anchor, Quaternion rotation) => _blocks.Add(new Block(_currentPattern, anchor, rotation, this));
 
     /// <summary>
-    /// Try to add the blocks that are currently pending to the grid
+    /// Try to add the blocks that are currently pending to the grids
     /// </summary>
     /// <returns>true if the function managed to place all the current blocks. False in all other cases</returns>
     public bool TryAddCurrentBlocksToGrid()
@@ -126,5 +122,14 @@ public class VoxelGrid
     public void PurgeUnplacedBlocks()
     {
         _blocks.RemoveAll(b => b.State != BlockState.Placed);
+    }
+
+    public void PurgeAllBlocks()
+    {
+        foreach (var block in _blocks)
+        {
+            block.DeactivateVoxels();
+        }
+        _blocks.Clear();
     }
 }

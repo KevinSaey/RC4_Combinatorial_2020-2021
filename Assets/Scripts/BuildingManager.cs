@@ -16,10 +16,11 @@ public class BuildingManager : MonoBehaviour
     [SerializeField]
     private float _voxelSize = 0.2f;
 
+    public VoxelGrid VGrid;
     // Start is called before the first frame update
     void Start()
     {
-        VoxelGrid.Instance = new VoxelGrid(_gridDimensions,_voxelSize);
+        VGrid = new VoxelGrid(_gridDimensions,_voxelSize);
     }
 
     void Update()

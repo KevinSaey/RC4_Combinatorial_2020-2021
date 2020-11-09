@@ -10,6 +10,7 @@ public class Block
 
     public PatternType Type;
     private Pattern _pattern => PatternManager.GetPatternByType(Type);
+    private VoxelGrid _grid;
 
 
     public Vector3Int Anchor;
@@ -34,11 +35,13 @@ public class Block
     /// <param name="type">The block type</param>
     /// <param name="anchor">The index where the block needs to be instantiated</param>
     /// <param name="rotation">The rotation the blocks needs to be instantiated in</param>
-    public Block(PatternType type, Vector3Int anchor, Quaternion rotation)
+    public Block(PatternType type, Vector3Int anchor, Quaternion rotation, VoxelGrid grid)
     {
         Type = type;
         Anchor = anchor;
         Rotation = rotation;
+        _grid = grid;
+
 
         PositionPattern();
     }
@@ -51,7 +54,7 @@ public class Block
         Voxels = new List<Voxel>();
         foreach (var index in _pattern.Indices)
         {
-            if (Util.TryOrientIndex(index, Anchor, Rotation, out var newIndex))
+            if (Util.TryOrientIndex(index, Anchor, Rotation,_grid, out var newIndex))
             {
                 Voxels.Add(VoxelGrid.Voxels[newIndex.x, newIndex.y, newIndex.z]);
             }
@@ -73,5 +76,11 @@ public class Block
             voxel.Status = VoxelState.Alive;
         _placed = true;
         return true;
+    }
+
+    public void DeactivateVoxels()
+    {
+        foreach (var voxel in Voxels)
+            voxel.Status = VoxelState.Dead;
     }
 }

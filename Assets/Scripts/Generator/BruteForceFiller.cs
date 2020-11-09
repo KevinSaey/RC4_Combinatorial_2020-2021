@@ -4,18 +4,38 @@ using UnityEngine;
 
 public class BruteForceFiller : MonoBehaviour
 {
-    int _counter = 0;
-    int _tries = 1000;
-    bool generating=false;
+    int _tryCounter = 0;
+    int _iterationCounter = 0;
+    int _triesPerIteration = 1000;
+    int _iterations = 100;
+    bool generating = false;
+    int _seed = 0;
+
+    private BuildingManager _buildingManager;
+    private VoxelGrid _grid;
+    public VoxelGrid VGrid
+    {
+        get
+        {
+            if (_grid == null)
+            {
+                GameObject manager = GameObject.Find("Manager");
+                _buildingManager = manager.GetComponent<BuildingManager>();
+                _grid = _buildingManager.VGrid;
+            }
+            return _grid;
+        }
+    }
+
     /// <summary>
     /// Generate a random index within the voxelgrid
     /// </summary>
     /// <returns>The index</returns>
     Vector3Int RandomIndex()
     {
-        int x = Random.Range(0, VoxelGrid.Instance.GridDimensions.x);
-        int y = Random.Range(0, VoxelGrid.Instance.GridDimensions.y);
-        int z = Random.Range(0, VoxelGrid.Instance.GridDimensions.z);
+        int x = Random.Range(0, VGrid.GridDimensions.x);
+        int y = Random.Range(0, VGrid.GridDimensions.y);
+        int z = Random.Range(0, VGrid.GridDimensions.z);
         return new Vector3Int(x, y, z);
     }
 
@@ -33,7 +53,7 @@ public class BruteForceFiller : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-
+        Random.seed = _seed;
     }
 
     // Update is called once per frame
@@ -43,24 +63,26 @@ public class BruteForceFiller : MonoBehaviour
         {
             generating = true;
             // TryAddRandomBlock();
-            StartCoroutine(BruteForce());
+            //StartCoroutine(BruteForce());
+            //BruteForceStep();
+            StartCoroutine(BruteForceEngine());
         }
     }
     /// OnGUI is used to display all the scripted graphic user interface elements in the Unity loop
     private void OnGUI()
     {
-        
+
         int padding = 10;
-        int labelHeight=50;
+        int labelHeight = 50;
         int labelWidth = 150;
         int counter = 0;
 
         if (generating)
         {
             GUI.Label(new Rect(padding, (padding + counter++) * labelHeight, labelWidth, labelHeight),
-                $"Grid {VoxelGrid.Instance.Efficiency} % filled");
+                $"Grid {VGrid.Efficiency} % filled");
             GUI.Label(new Rect(padding, (padding + counter++) * labelHeight, labelWidth, labelHeight),
-                $"Grid {VoxelGrid.Instance.NumberOfBlocks} Blocks added");
+                $"Grid {VGrid.NumberOfBlocks} Blocks added");
         }
     }
 
@@ -71,8 +93,8 @@ public class BruteForceFiller : MonoBehaviour
     {
         var anchor = new Vector3Int(2, 8, 0);
         var rotation = Quaternion.Euler(0, 0, -90);
-        VoxelGrid.Instance.AddBlock                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            (anchor, rotation);
-        VoxelGrid.Instance.TryAddCurrentBlocksToGrid();
+        VGrid.AddBlock(anchor, rotation);
+        VGrid.TryAddCurrentBlocksToGrid();
     }
 
     /// <summary>
@@ -81,9 +103,9 @@ public class BruteForceFiller : MonoBehaviour
     /// <returns>returns true if it managed to add the block to the grid</returns>
     private bool TryAddRandomBlock()
     {
-        VoxelGrid.Instance.AddBlock(RandomIndex(), RandomRotation());
-        bool blockAdded = VoxelGrid.Instance.TryAddCurrentBlocksToGrid();
-        VoxelGrid.Instance.PurgeUnplacedBlocks();
+        VGrid.AddBlock(RandomIndex(), RandomRotation());
+        bool blockAdded = VGrid.TryAddCurrentBlocksToGrid();
+        VGrid.PurgeUnplacedBlocks();
         return blockAdded;
     }
 
@@ -93,10 +115,33 @@ public class BruteForceFiller : MonoBehaviour
     /// <returns>Wait 0.01 seconds between each iteration</returns>
     IEnumerator BruteForce()
     {
-        while(_counter<_tries)
+        while (_tryCounter < _triesPerIteration)
         {
             TryAddRandomBlock();
-            _counter++;
+            _tryCounter++;
+            yield return new WaitForSeconds(0.01f);
+        }
+    }
+
+    private void BruteForceStep()
+    {
+        while (_tryCounter < _triesPerIteration)
+        {
+            TryAddRandomBlock();
+            _tryCounter++;
+        }
+    }
+
+    IEnumerator BruteForceEngine()
+    {
+        
+
+        while (_iterationCounter < _iterations)
+        {
+            VGrid.PurgeAllBlocks();
+            Random.seed = _seed++;
+            BruteForceStep();
+            _iterationCounter++;
             yield return new WaitForSeconds(0.01f);
         }
     }

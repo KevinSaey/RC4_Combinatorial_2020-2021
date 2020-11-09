@@ -54,6 +54,7 @@ public class PatternManager
     /// <returns></returns>
     public bool AddPattern(List<Vector3Int> indices, PatternType type)
     {
+
         //only add valid patterns
         if (indices == null) return false;
         if (indices[0] != Vector3Int.zero) return false;
@@ -77,7 +78,7 @@ public class Pattern
     /// <summary>
     /// The patterns are saved as ReadOnlyCollections rather than list so that once defined, the pattern can never be changed
     /// </summary>
-    public ReadOnlyCollection<Vector3Int> Indices { get;}
+    public ReadOnlyCollection<Vector3Int> Indices { get; }
     public PatternType Type { get; }
 
     /// <summary>
