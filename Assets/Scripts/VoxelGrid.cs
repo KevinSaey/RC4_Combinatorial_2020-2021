@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor;
 using UnityEngine;
 
 public class VoxelGrid
@@ -33,7 +34,7 @@ public class VoxelGrid
     /// </summary>
     private List<Block> _currentBlocks => _blocks.Where(b => b.State != BlockState.Placed).ToList();
 
-    private readonly List<Block> _blocks = new List<Block>();
+    private List<Block> _blocks = new List<Block>();
     private PatternType _currentPattern = PatternType.PatternA;
 
     /// <summary>
@@ -96,13 +97,13 @@ public class VoxelGrid
     {
         if (_currentBlocks == null || _currentBlocks.Count == 0)
         {
-            Debug.LogWarning("No blocks to add");
+            //Debug.LogWarning("No blocks to add");
             return false;
         }
         if (_currentBlocks.Count(b => b.State != BlockState.Valid) > 0)
         {
             //if we use $ in front of ", variables can be added inline between {} when defining a string
-            Debug.LogWarning($"{_currentBlocks.Count(b => b.State != BlockState.Valid)} blocks could not be place because their position is not valid");
+            //Debug.LogWarning($"{_currentBlocks.Count(b => b.State != BlockState.Valid)} blocks could not be place because their position is not valid");
             return false;
         }
         int counter = 0;
@@ -112,7 +113,7 @@ public class VoxelGrid
             _currentBlocks.First().ActivateVoxels();
             counter++;
         }
-        Debug.Log($"Added {counter} blocks to the grid");
+        //Debug.Log($"Added {counter} blocks to the grid");
         return true;
     }
 
@@ -130,6 +131,6 @@ public class VoxelGrid
         {
             block.DeactivateVoxels();
         }
-        _blocks.Clear();
+        _blocks = new List<Block>();
     }
 }

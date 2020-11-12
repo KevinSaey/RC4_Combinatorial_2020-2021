@@ -1,16 +1,20 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using UnityEngine.InputSystem.XR.Haptics;
 
 public class BruteForceFiller : MonoBehaviour
 {
     int _tryCounter = 0;
     int _iterationCounter = 0;
-    int _triesPerIteration = 1000;
-    int _iterations = 100;
+    int _triesPerIteration = 2000;
+    int _iterations = 500;
     bool generating = false;
     int _seed = 0;
 
+    private Dictionary<int, float> _efficiencies = new Dictionary<int, float>();
+    List<int> orderedEfficiencyIndex = new List<int>();
     private BuildingManager _buildingManager;
     private VoxelGrid _grid;
     public VoxelGrid VGrid
@@ -61,11 +65,19 @@ public class BruteForceFiller : MonoBehaviour
     {
         if (Input.GetKeyDown("space"))
         {
-            generating = true;
-            // TryAddRandomBlock();
-            //StartCoroutine(BruteForce());
-            //BruteForceStep();
-            StartCoroutine(BruteForceEngine());
+            if (!generating)
+            {
+                generating = true;
+                // TryAddRandomBlock();
+                //StartCoroutine(BruteForce());
+                //BruteForceStep();
+                StartCoroutine(BruteForceEngine());
+            }
+            else
+            {
+                generating = false;
+                StopAllCoroutines();
+            }
         }
     }
     /// OnGUI is used to display all the scripted graphic user interface elements in the Unity loop
@@ -73,16 +85,24 @@ public class BruteForceFiller : MonoBehaviour
     {
 
         int padding = 10;
-        int labelHeight = 50;
+        int labelHeight = 20;
         int labelWidth = 150;
         int counter = 0;
 
         if (generating)
         {
-            GUI.Label(new Rect(padding, (padding + counter++) * labelHeight, labelWidth, labelHeight),
+            GUI.Label(new Rect(padding, (padding + labelHeight) * ++counter, labelWidth, labelHeight),
                 $"Grid {VGrid.Efficiency} % filled");
-            GUI.Label(new Rect(padding, (padding + counter++) * labelHeight, labelWidth, labelHeight),
+            GUI.Label(new Rect(padding, (padding + labelHeight) * ++counter, labelWidth, labelHeight),
                 $"Grid {VGrid.NumberOfBlocks} Blocks added");
+        }
+        Debug.LogWarning("here");
+        for (int i = 0; i < Mathf.Min(orderedEfficiencyIndex.Count,10); i++)
+        {
+            string text = $"Seed: {orderedEfficiencyIndex[i]} Efficiency: {_efficiencies[orderedEfficiencyIndex[i]]}";
+            GUI.Label(new Rect(padding, (padding + labelHeight) * ++counter, labelWidth, labelHeight),
+               text);
+            
         }
     }
 
@@ -125,24 +145,35 @@ public class BruteForceFiller : MonoBehaviour
 
     private void BruteForceStep()
     {
+        VGrid.PurgeAllBlocks();
+        _tryCounter = 0;
         while (_tryCounter < _triesPerIteration)
         {
             TryAddRandomBlock();
             _tryCounter++;
         }
+
+        _efficiencies.Add(_seed, _grid.Efficiency);
+        orderedEfficiencyIndex = _efficiencies.Keys.OrderByDescending(k => _efficiencies[k]).Take(11).ToList();
+        if(orderedEfficiencyIndex.Count == 11)
+            _efficiencies.Remove(orderedEfficiencyIndex[10]);
+
+        
     }
 
     IEnumerator BruteForceEngine()
     {
-        
-
         while (_iterationCounter < _iterations)
         {
-            VGrid.PurgeAllBlocks();
             Random.seed = _seed++;
             BruteForceStep();
             _iterationCounter++;
-            yield return new WaitForSeconds(0.01f);
+            yield return new WaitForSeconds(0.5f);
+        }
+
+        foreach (var value in _efficiencies.Values)
+        {
+            Debug.Log(value);
         }
     }
 
