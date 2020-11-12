@@ -168,7 +168,7 @@ public class BruteForceFiller : MonoBehaviour
             Random.seed = _seed++;
             BruteForceStep();
             _iterationCounter++;
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(0.05f);
         }
 
         foreach (var value in _efficiencies.Values)
