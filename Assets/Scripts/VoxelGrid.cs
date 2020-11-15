@@ -50,14 +50,14 @@ public class VoxelGrid
     /// </summary>
     public int NumberOfBlocks => _blocks.Count(b => b.State == BlockState.Placed);
     /// <summary>
-    /// what percentage of the grid has been filled up
+    /// what percentage of the available grid has been filled up
     /// </summary>
     public float Efficiency
     {
         get
         {
             //if we don't cast this value to a float, it always returns 0 as it is rounding down to integer values
-            return (float)FlattenedVoxels.Count(v => v.Status == VoxelState.Alive) / FlattenedVoxels.Count() * 100;
+            return (float)FlattenedVoxels.Count(v => v.Status == VoxelState.Alive) / FlattenedVoxels.Where(v=>v.Status!=VoxelState.Dead).Count() * 100;
         }
     }
 
@@ -100,7 +100,7 @@ public class VoxelGrid
     #region constructor
 
     /// <summary>
-    /// Constructor for the voxelgrid object. To be called in the Building manager
+    /// Constructor for the voxelgrid object. To be called in the Building manager. Origin set to 0,0,0
     /// </summary>
     /// <param name="gridDimensions">The dimensions of the grid</param>
     /// <param name="voxelSize">The size of one voxel</param>
@@ -109,6 +109,21 @@ public class VoxelGrid
         GridSize = gridDimensions;
         _goVoxelPrefab = Resources.Load("Prefabs/VoxelCube") as GameObject;
         VoxelSize = voxelSize;
+        Origin = Vector3.zero;
+        CreateVoxelGrid();
+    }
+
+    /// <summary>
+    /// Constructor for the voxelgrid object. To be called in the Building manager
+    /// </summary>
+    /// <param name="gridDimensions">The dimensions of the grid</param>
+    /// <param name="voxelSize">The size of one voxel</param>
+    public VoxelGrid(Vector3Int gridDimensions, float voxelSize,Vector3 origin)
+    {
+        GridSize = gridDimensions;
+        _goVoxelPrefab = Resources.Load("Prefabs/VoxelCube") as GameObject;
+        VoxelSize = voxelSize;
+        Origin = origin;
 
         CreateVoxelGrid();
     }
@@ -286,5 +301,95 @@ public class VoxelGrid
         PatternType[] values = System.Enum.GetValues(typeof(PatternType)).Cast<PatternType>().ToArray();
         _currentPattern = (PatternType)values[Random.Range(0, values.Length)];
     }
+    #endregion
+
+    #region Grid operations
+
+    /// <summary>
+    /// Get the Faces of the <see cref="VoxelGrid"/>
+    /// </summary>
+    /// <returns>All the faces</returns>
+    public IEnumerable<Face> GetFaces()
+    {
+        for (int n = 0; n < 3; n++)
+        {
+            int xSize = Faces[n].GetLength(0);
+            int ySize = Faces[n].GetLength(1);
+            int zSize = Faces[n].GetLength(2);
+
+            for (int x = 0; x < xSize; x++)
+                for (int y = 0; y < ySize; y++)
+                    for (int z = 0; z < zSize; z++)
+                    {
+                        yield return Faces[n][x, y, z];
+                    }
+        }
+    }
+
+    /// <summary>
+    /// Get the Voxels of the <see cref="VoxelGrid"/>
+    /// </summary>
+    /// <returns>All the Voxels</returns>
+    public IEnumerable<Voxel> GetVoxels()
+    {
+        for (int x = 0; x < GridSize.x; x++)
+            for (int y = 0; y < GridSize.y; y++)
+                for (int z = 0; z < GridSize.z; z++)
+                {
+                    yield return Voxels[x, y, z];
+                }
+    }
+
+    /// <summary>
+    /// Get the Corners of the <see cref="VoxelGrid"/>
+    /// </summary>
+    /// <returns>All the Corners</returns>
+    public IEnumerable<Corner> GetCorners()
+    {
+        for (int x = 0; x < GridSize.x + 1; x++)
+            for (int y = 0; y < GridSize.y + 1; y++)
+                for (int z = 0; z < GridSize.z + 1; z++)
+                {
+                    yield return Corners[x, y, z];
+                }
+    }
+
+    /// <summary>
+    /// Get the Edges of the <see cref="VoxelGrid"/>
+    /// </summary>
+    /// <returns>All the edges</returns>
+    public IEnumerable<Edge> GetEdges()
+    {
+        for (int n = 0; n < 3; n++)
+        {
+            int xSize = Edges[n].GetLength(0);
+            int ySize = Edges[n].GetLength(1);
+            int zSize = Edges[n].GetLength(2);
+
+            for (int x = 0; x < xSize; x++)
+                for (int y = 0; y < ySize; y++)
+                    for (int z = 0; z < zSize; z++)
+                    {
+                        yield return Edges[n][x, y, z];
+                    }
+        }
+    }
+
+    public void DisableInsideBoundingMesh()
+    {
+        foreach (var voxel in GetVoxels())
+        {
+            if (BoundingMesh.IsInsideCentre(voxel)) voxel.Status = VoxelState.Dead;
+        }
+    }
+
+    public void DisableOutsideBoundingMesh()
+    {
+        foreach (var voxel in GetVoxels())
+        {
+            if (!BoundingMesh.IsInsideCentre(voxel)) voxel.Status = VoxelState.Dead;
+        }
+    }
+
     #endregion
 }

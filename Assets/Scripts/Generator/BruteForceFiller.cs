@@ -5,28 +5,32 @@ using UnityEngine;
 
 public class BruteForceFiller : MonoBehaviour
 {
-    int _tryCounter = 0;
-    int _iterationCounter = 0;
-    int _triesPerIteration = 2000;
-    int _iterations = 500;
-    bool generating = false;
-    int _seed = 0;
+    private float _voxelSize = 0.2f;
+    private int _voxelOffset = 2;
+    private int _triesPerIteration = 25000;
+    private int _iterations = 100;
+
+    private int _tryCounter = 0;
+    private int _iterationCounter = 0;
+
+    private bool generating = false;
+    private int _seed = 0;
 
     private Dictionary<int, float> _efficiencies = new Dictionary<int, float>();
-    List<int> orderedEfficiencyIndex = new List<int>();
+    private List<int> orderedEfficiencyIndex = new List<int>();
     private BuildingManager _buildingManager;
     private VoxelGrid _grid;
-    public VoxelGrid VGrid
+
+    public BuildingManager BManager
     {
         get
         {
-            if (_grid == null)
+            if (_buildingManager == null)
             {
                 GameObject manager = GameObject.Find("Manager");
                 _buildingManager = manager.GetComponent<BuildingManager>();
-                _grid = _buildingManager.VGrid;
             }
-            return _grid;
+            return _buildingManager;
         }
     }
 
@@ -36,9 +40,9 @@ public class BruteForceFiller : MonoBehaviour
     /// <returns>The index</returns>
     Vector3Int RandomIndex()
     {
-        int x = Random.Range(0, VGrid.GridSize.x);
-        int y = Random.Range(0, VGrid.GridSize.y);
-        int z = Random.Range(0, VGrid.GridSize.z);
+        int x = Random.Range(0, _grid.GridSize.x);
+        int y = Random.Range(0, _grid.GridSize.y);
+        int z = Random.Range(0, _grid.GridSize.z);
         return new Vector3Int(x, y, z);
     }
 
@@ -56,6 +60,9 @@ public class BruteForceFiller : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        _grid = BManager.CreateVoxelGrid(BoundingMesh.GetGridDimensions(_voxelOffset, _voxelSize), _voxelSize, BoundingMesh.GetOrigin(_voxelOffset, _voxelSize));
+        Debug.Log(_grid.GridSize);
+        _grid.DisableOutsideBoundingMesh();
         Random.seed = _seed;
     }
 
@@ -65,11 +72,11 @@ public class BruteForceFiller : MonoBehaviour
         if (Input.GetKeyDown("space"))
         {
             //TryAddRandomBlock();
-            
+
             if (!generating)
             {
                 generating = true;
-                
+
                 //StartCoroutine(BruteForce());
                 //BruteForceStep();
                 StartCoroutine(BruteForceEngine());
@@ -86,10 +93,9 @@ public class BruteForceFiller : MonoBehaviour
     /// OnGUI is used to display all the scripted graphic user interface elements in the Unity loop
     private void OnGUI()
     {
-
         int padding = 10;
         int labelHeight = 20;
-        int labelWidth = 150;
+        int labelWidth = 250;
         int counter = 0;
 
         if (generating)
@@ -97,16 +103,16 @@ public class BruteForceFiller : MonoBehaviour
             _grid.ShowVoxels = GUI.Toggle(new Rect(padding, (padding + labelHeight) * ++counter, labelWidth, labelHeight), _grid.ShowVoxels, "Show voxels");
 
             GUI.Label(new Rect(padding, (padding + labelHeight) * ++counter, labelWidth, labelHeight),
-                $"Grid {VGrid.Efficiency} % filled");
+                $"Grid {_grid.Efficiency} % filled");
             GUI.Label(new Rect(padding, (padding + labelHeight) * ++counter, labelWidth, labelHeight),
-                $"Grid {VGrid.NumberOfBlocks} Blocks added");
+                $"Grid {_grid.NumberOfBlocks} Blocks added");
         }
-        for (int i = 0; i < Mathf.Min(orderedEfficiencyIndex.Count,10); i++)
+        for (int i = 0; i < Mathf.Min(orderedEfficiencyIndex.Count, 10); i++)
         {
             string text = $"Seed: {orderedEfficiencyIndex[i]} Efficiency: {_efficiencies[orderedEfficiencyIndex[i]]}";
             GUI.Label(new Rect(padding, (padding + labelHeight) * ++counter, labelWidth, labelHeight),
                text);
-            
+
         }
     }
 
@@ -117,8 +123,8 @@ public class BruteForceFiller : MonoBehaviour
     {
         var anchor = new Vector3Int(2, 8, 0);
         var rotation = Quaternion.Euler(0, 0, -90);
-        VGrid.AddBlock(anchor, rotation);
-        VGrid.TryAddCurrentBlocksToGrid();
+        _grid.AddBlock(anchor, rotation);
+        _grid.TryAddCurrentBlocksToGrid();
     }
 
     /// <summary>
@@ -128,9 +134,9 @@ public class BruteForceFiller : MonoBehaviour
     private bool TryAddRandomBlock()
     {
         _grid.SetRandomType();
-        VGrid.AddBlock(RandomIndex(), RandomRotation());
-        bool blockAdded = VGrid.TryAddCurrentBlocksToGrid();
-        VGrid.PurgeUnplacedBlocks();
+        _grid.AddBlock(RandomIndex(), RandomRotation());
+        bool blockAdded = _grid.TryAddCurrentBlocksToGrid();
+        _grid.PurgeUnplacedBlocks();
         return blockAdded;
     }
 
@@ -153,7 +159,7 @@ public class BruteForceFiller : MonoBehaviour
     /// </summary>
     private void BruteForceStep()
     {
-        VGrid.PurgeAllBlocks();
+        _grid.PurgeAllBlocks();
         _tryCounter = 0;
         while (_tryCounter < _triesPerIteration)
         {
@@ -163,10 +169,10 @@ public class BruteForceFiller : MonoBehaviour
 
         _efficiencies.Add(_seed, _grid.Efficiency);
         orderedEfficiencyIndex = _efficiencies.Keys.OrderByDescending(k => _efficiencies[k]).Take(11).ToList();
-        if(orderedEfficiencyIndex.Count == 11)
+        if (orderedEfficiencyIndex.Count == 11)
             _efficiencies.Remove(orderedEfficiencyIndex[10]);
 
-        
+
     }
 
     /// <summary>

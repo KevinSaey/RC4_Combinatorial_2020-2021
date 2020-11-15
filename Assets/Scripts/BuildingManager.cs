@@ -17,10 +17,11 @@ public class BuildingManager : MonoBehaviour
     private float _voxelSize = 0.2f;
 
     public VoxelGrid VGrid;
-    // Start is called before the first frame update
-    void Start()
+
+    public VoxelGrid CreateVoxelGrid(Vector3Int gridDimensions, float voxelSize, Vector3 origin)
     {
-        VGrid = new VoxelGrid(_gridDimensions,_voxelSize);
+        VGrid = new VoxelGrid(gridDimensions, voxelSize, origin);
+        return VGrid;
     }
 
     void Update()

@@ -25,7 +25,7 @@ public class Block
         {
             if (_placed) return BlockState.Placed;
             if (Voxels.Count < _pattern.Indices.Count) return BlockState.OutOfBounds;
-            if (Voxels.Count(v => v.Status == VoxelState.Alive) > 0) return BlockState.Intersecting;
+            if (Voxels.Count(v => v.Status != VoxelState.Available) > 0) return BlockState.Intersecting;
             return BlockState.Valid;
         }
     }
@@ -95,7 +95,7 @@ public class Block
     public void DeactivateVoxels()
     {
         foreach (var voxel in Voxels)
-            voxel.Status = VoxelState.Dead;
+            voxel.Status = VoxelState.Available;
     }
 
     /// <summary>
