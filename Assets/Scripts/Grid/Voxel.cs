@@ -2,18 +2,37 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum VoxelState { Dead = 0, Alive = 1}
+public enum VoxelState { Dead = 0, Alive = 1 }
 public class Voxel
 {
-    private Vector3Int _index;
+    public Vector3Int Index;
+    public List<Face> Faces = new List<Face>(6);
+
     private GameObject _goVoxel;
     private VoxelState _voxelStatus;
     private VoxelGrid _grid;
+    private bool _showVoxel;
+    public bool ShowVoxel
+    {
+        get
+        {
+            return _showVoxel;
+        }
+        set
+        {
+            _showVoxel = value;
+            if (!value)
+                _goVoxel.SetActive(value);
+            else
+                _goVoxel.SetActive(Status == VoxelState.Alive);
+
+        }
+    }
 
     /// <summary>
     /// Get the centre point of the voxel in worldspace
     /// </summary>
-    private Vector3 _centre => (Vector3)_index * _grid.VoxelSize + Vector3.one * 0.5f * _grid.VoxelSize;
+    public Vector3 Centre => (Vector3)Index * _grid.VoxelSize + Vector3.one * 0.5f * _grid.VoxelSize;
 
     /*private Vector3 _centre
     {
@@ -34,7 +53,7 @@ public class Voxel
         }
         set
         {
-            _goVoxel.SetActive(value == VoxelState.Alive);
+            _goVoxel.SetActive(value == VoxelState.Alive && _showVoxel);
             _voxelStatus = value;
         }
     }
@@ -47,12 +66,14 @@ public class Voxel
     public Voxel(Vector3Int index, GameObject goVoxel, VoxelGrid grid)
     {
         _grid = grid;
-        _index = index;
-        _goVoxel = GameObject.Instantiate(goVoxel, _centre, Quaternion.identity);
+        Index = index;
+        _goVoxel = GameObject.Instantiate(goVoxel, Centre, Quaternion.identity);
         _goVoxel.GetComponent<VoxelTrigger>().TriggerVoxel = this;
         _goVoxel.transform.localScale = Vector3.one * _grid.VoxelSize * 0.95f;
         Status = VoxelState.Dead;
     }
+
+
 
     public void SetColor(Color color)
     {

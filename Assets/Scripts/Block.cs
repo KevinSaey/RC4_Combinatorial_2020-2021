@@ -11,7 +11,7 @@ public class Block
     public PatternType Type;
     private Pattern _pattern => PatternManager.GetPatternByType(Type);
     private VoxelGrid _grid;
-
+    private GameObject _goBlock;
 
     public Vector3Int Anchor;
     public Quaternion Rotation;
@@ -41,7 +41,7 @@ public class Block
         Anchor = anchor;
         Rotation = rotation;
         _grid = grid;
-
+        
 
         PositionPattern();
     }
@@ -56,7 +56,7 @@ public class Block
         {
             if (Util.TryOrientIndex(index, Anchor, Rotation, _grid, out var newIndex))
             {
-                Voxels.Add(VoxelGrid.Voxels[newIndex.x, newIndex.y, newIndex.z]);
+                Voxels.Add(_grid.Voxels[newIndex.x, newIndex.y, newIndex.z]);
             }
         }
     }
@@ -79,13 +79,31 @@ public class Block
             voxel.Status = VoxelState.Alive;
             voxel.SetColor(randomCol);
         }
+        CreateGOBlock();
         _placed = true;
         return true;
     }
 
+    public void CreateGOBlock()
+    {
+        _goBlock = GameObject.Instantiate(_grid.GOPatternPrefabs[Type], _grid.GetVoxelByIndex(Anchor).Centre, Rotation);
+    }
+
+    /// <summary>
+    /// Remove the block from the grid
+    /// </summary>
     public void DeactivateVoxels()
     {
         foreach (var voxel in Voxels)
             voxel.Status = VoxelState.Dead;
+    }
+
+    /// <summary>
+    /// Completely remove the block
+    /// </summary>
+    public void DestroyBlock()
+    {
+        DeactivateVoxels();
+        if(_goBlock!= null)GameObject.Destroy(_goBlock);
     }
 }

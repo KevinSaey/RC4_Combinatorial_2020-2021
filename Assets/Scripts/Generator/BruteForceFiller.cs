@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.InputSystem.XR.Haptics;
 
 public class BruteForceFiller : MonoBehaviour
 {
@@ -37,9 +36,9 @@ public class BruteForceFiller : MonoBehaviour
     /// <returns>The index</returns>
     Vector3Int RandomIndex()
     {
-        int x = Random.Range(0, VGrid.GridDimensions.x);
-        int y = Random.Range(0, VGrid.GridDimensions.y);
-        int z = Random.Range(0, VGrid.GridDimensions.z);
+        int x = Random.Range(0, VGrid.GridSize.x);
+        int y = Random.Range(0, VGrid.GridSize.y);
+        int z = Random.Range(0, VGrid.GridSize.z);
         return new Vector3Int(x, y, z);
     }
 
@@ -65,10 +64,12 @@ public class BruteForceFiller : MonoBehaviour
     {
         if (Input.GetKeyDown("space"))
         {
+            //TryAddRandomBlock();
+            
             if (!generating)
             {
                 generating = true;
-                // TryAddRandomBlock();
+                
                 //StartCoroutine(BruteForce());
                 //BruteForceStep();
                 StartCoroutine(BruteForceEngine());
@@ -93,6 +94,8 @@ public class BruteForceFiller : MonoBehaviour
 
         if (generating)
         {
+            _grid.ShowVoxels = GUI.Toggle(new Rect(padding, (padding + labelHeight) * ++counter, labelWidth, labelHeight), _grid.ShowVoxels, "Show voxels");
+
             GUI.Label(new Rect(padding, (padding + labelHeight) * ++counter, labelWidth, labelHeight),
                 $"Grid {VGrid.Efficiency} % filled");
             GUI.Label(new Rect(padding, (padding + labelHeight) * ++counter, labelWidth, labelHeight),

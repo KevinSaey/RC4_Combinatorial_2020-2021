@@ -6,9 +6,45 @@ using UnityEngine;
 
 public class VoxelGrid
 {
-    public static Voxel[,,] Voxels;
-    public Vector3Int GridDimensions;
+    #region Public fields
 
+    public Voxel[,,] Voxels;
+    public Vector3Int GridSize;
+    public readonly float VoxelSize;
+    public Corner[,,] Corners;
+    public Face[][,,] Faces = new Face[3][,,];
+    public Edge[][,,] Edges = new Edge[3][,,];
+    public Vector3 Origin;
+    public Vector3 Corner;
+
+    #endregion
+
+    #region private fields
+    private bool _showVoxels = false;
+    private GameObject _goVoxelPrefab;
+    private List<Block> _blocks = new List<Block>();
+    private PatternType _currentPattern = PatternType.PatternA;
+
+    private List<Block> _currentBlocks => _blocks.Where(b => b.State != BlockState.Placed).ToList();
+    #endregion
+
+    #region Public dynamic getters
+    public bool ShowVoxels
+    {
+        get
+        {
+            return _showVoxels;
+        }
+        set
+        {
+            foreach (var voxel in FlattenedVoxels)
+            {
+                voxel.ShowVoxel = value;
+            }
+            _showVoxels = value;
+
+        }
+    }
     /// <summary>
     /// Counts the number of blocks placed in the voxelgrid
     /// </summary>
@@ -21,35 +57,47 @@ public class VoxelGrid
         get
         {
             //if we don't cast this value to a float, it always returns 0 as it is rounding down to integer values
-            return (float)GetFlattenedVoxels.Count(v => v.Status == VoxelState.Alive) / GetFlattenedVoxels.Count() * 100;
+            return (float)FlattenedVoxels.Count(v => v.Status == VoxelState.Alive) / FlattenedVoxels.Count() * 100;
         }
     }
 
-    public readonly float VoxelSize;
-
-    private GameObject _goVoxelPrefab;
-
-    /// <summary>
-    /// Return all blocks that are not allready place in the grid
-    /// </summary>
-    private List<Block> _currentBlocks => _blocks.Where(b => b.State != BlockState.Placed).ToList();
-
-    private List<Block> _blocks = new List<Block>();
-    private PatternType _currentPattern = PatternType.PatternA;
+    private Dictionary<PatternType, GameObject> _goPatternPrefabs;
+    public Dictionary<PatternType, GameObject> GOPatternPrefabs
+    {
+        get
+        {
+            if (_goPatternPrefabs == null)
+            {
+                _goPatternPrefabs = new Dictionary<PatternType, GameObject>();
+                _goPatternPrefabs.Add(PatternType.PatternA, Resources.Load("Prefabs/PrefabPatternA") as GameObject);
+                _goPatternPrefabs.Add(PatternType.PatternB, Resources.Load("Prefabs/PrefabPatternB") as GameObject);
+            }
+            return _goPatternPrefabs;
+        }
+    }
 
     /// <summary>
     /// Return the voxels in a flat list rather than a threedimensional array
     /// </summary>
-    public IEnumerable<Voxel> GetFlattenedVoxels
+    public IEnumerable<Voxel> FlattenedVoxels
     {
         get
         {
-            for (int x = 0; x < GridDimensions.x; x++)
-                for (int y = 0; y < GridDimensions.y; y++)
-                    for (int z = 0; z < GridDimensions.z; z++)
+            for (int x = 0; x < GridSize.x; x++)
+                for (int y = 0; y < GridSize.y; y++)
+                    for (int z = 0; z < GridSize.z; z++)
                         yield return Voxels[x, y, z];
         }
     }
+
+    public Voxel GetVoxelByIndex(Vector3Int index) => Voxels[index.x, index.y, index.z];
+    /// <summary>
+    /// Return all blocks that are not allready place in the grid
+    /// </summary>
+    
+    #endregion
+    
+    #region constructor
 
     /// <summary>
     /// Constructor for the voxelgrid object. To be called in the Building manager
@@ -58,7 +106,7 @@ public class VoxelGrid
     /// <param name="voxelSize">The size of one voxel</param>
     public VoxelGrid(Vector3Int gridDimensions, float voxelSize)
     {
-        GridDimensions = gridDimensions;
+        GridSize = gridDimensions;
         _goVoxelPrefab = Resources.Load("Prefabs/VoxelCube") as GameObject;
         VoxelSize = voxelSize;
 
@@ -70,18 +118,114 @@ public class VoxelGrid
     /// </summary>
     private void CreateVoxelGrid()
     {
-        Voxels = new Voxel[GridDimensions.x, GridDimensions.y, GridDimensions.z];
-        for (int x = 0; x < GridDimensions.x; x++)
+        Voxels = new Voxel[GridSize.x, GridSize.y, GridSize.z];
+        for (int x = 0; x < GridSize.x; x++)
         {
-            for (int y = 0; y < GridDimensions.y; y++)
+            for (int y = 0; y < GridSize.y; y++)
             {
-                for (int z = 0; z < GridDimensions.z; z++)
+                for (int z = 0; z < GridSize.z; z++)
                 {
                     Voxels[x, y, z] = new Voxel(new Vector3Int(x, y, z), _goVoxelPrefab, this);
                 }
             }
         }
+
+        MakeFaces();
+        MakeCorners();
+        MakeEdges();
     }
+
+
+    #region Grid elements constructors
+
+    /// <summary>
+    /// Creates the Faces of each <see cref="Voxel"/>
+    /// </summary>
+    private void MakeFaces()
+    {
+        // make faces
+        Faces[0] = new Face[GridSize.x + 1, GridSize.y, GridSize.z];
+
+        for (int x = 0; x < GridSize.x + 1; x++)
+            for (int y = 0; y < GridSize.y; y++)
+                for (int z = 0; z < GridSize.z; z++)
+                {
+                    Faces[0][x, y, z] = new Face(x, y, z, Axis.X, this);
+                }
+
+        Faces[1] = new Face[GridSize.x, GridSize.y + 1, GridSize.z];
+
+        for (int x = 0; x < GridSize.x; x++)
+            for (int y = 0; y < GridSize.y + 1; y++)
+                for (int z = 0; z < GridSize.z; z++)
+                {
+                    Faces[1][x, y, z] = new Face(x, y, z, Axis.Y, this);
+                }
+
+        Faces[2] = new Face[GridSize.x, GridSize.y, GridSize.z + 1];
+
+        for (int x = 0; x < GridSize.x; x++)
+            for (int y = 0; y < GridSize.y; y++)
+                for (int z = 0; z < GridSize.z + 1; z++)
+                {
+                    Faces[2][x, y, z] = new Face(x, y, z, Axis.Z, this);
+                }
+    }
+
+    /// <summary>
+    /// Creates the Corners of each Voxel
+    /// </summary>
+    private void MakeCorners()
+    {
+        Corner = new Vector3(Origin.x - VoxelSize / 2, Origin.y - VoxelSize / 2, Origin.z - VoxelSize / 2);
+
+        Corners = new Corner[GridSize.x + 1, GridSize.y + 1, GridSize.z + 1];
+
+        for (int x = 0; x < GridSize.x + 1; x++)
+            for (int y = 0; y < GridSize.y + 1; y++)
+                for (int z = 0; z < GridSize.z + 1; z++)
+                {
+                    Corners[x, y, z] = new Corner(new Vector3Int(x, y, z), this);
+                }
+    }
+
+    /// <summary>
+    /// Creates the Edges of each Voxel
+    /// </summary>
+    private void MakeEdges()
+    {
+        Edges[2] = new Edge[GridSize.x + 1, GridSize.y + 1, GridSize.z];
+
+        for (int x = 0; x < GridSize.x + 1; x++)
+            for (int y = 0; y < GridSize.y + 1; y++)
+                for (int z = 0; z < GridSize.z; z++)
+                {
+                    Edges[2][x, y, z] = new Edge(x, y, z, Axis.Z, this);
+                }
+
+        Edges[0] = new Edge[GridSize.x, GridSize.y + 1, GridSize.z + 1];
+
+        for (int x = 0; x < GridSize.x; x++)
+            for (int y = 0; y < GridSize.y + 1; y++)
+                for (int z = 0; z < GridSize.z + 1; z++)
+                {
+                    Edges[0][x, y, z] = new Edge(x, y, z, Axis.X, this);
+                }
+
+        Edges[1] = new Edge[GridSize.x + 1, GridSize.y, GridSize.z + 1];
+
+        for (int x = 0; x < GridSize.x + 1; x++)
+            for (int y = 0; y < GridSize.y; y++)
+                for (int z = 0; z < GridSize.z + 1; z++)
+                {
+                    Edges[1][x, y, z] = new Edge(x, y, z, Axis.Y, this);
+                }
+    }
+
+    #endregion
+    #endregion
+
+    #region Block functionality
     /// <summary>
     /// Temporary add a block to the grid. To confirm the block at it's current position, use the TryAddCurrentBlocksToGrid function
     /// </summary>
@@ -129,7 +273,7 @@ public class VoxelGrid
     {
         foreach (var block in _blocks)
         {
-            block.DeactivateVoxels();
+            block.DestroyBlock();
         }
         _blocks = new List<Block>();
     }
@@ -142,4 +286,5 @@ public class VoxelGrid
         PatternType[] values = System.Enum.GetValues(typeof(PatternType)).Cast<PatternType>().ToArray();
         _currentPattern = (PatternType)values[Random.Range(0, values.Length)];
     }
+    #endregion
 }

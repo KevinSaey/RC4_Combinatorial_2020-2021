@@ -2,11 +2,14 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum Axis { X, Y, Z };
 /// <summary>
 /// Static class for all general usefull functions related to this project
 /// </summary>
 public static class Util
 {
+   
+
     /// <summary>
     /// Extension method to Unities Vector3Int class. Now you can use a Vector3 variable and use the .ToVector3InRound to get the vector rounded to its integer values
     /// </summary>
@@ -30,9 +33,9 @@ public static class Util
         if (index.x < 0) return false;
         if (index.y < 0) return false;
         if (index.z < 0) return false;
-        if (index.x >= grid.GridDimensions.x) return false;
-        if (index.y >= grid.GridDimensions.y) return false;
-        if (index.z >= grid.GridDimensions.z) return false;
+        if (index.x >= grid.GridSize.x) return false;
+        if (index.y >= grid.GridSize.y) return false;
+        if (index.z >= grid.GridSize.z) return false;
         return true;
     }
 
