@@ -79,6 +79,8 @@ public class BruteForceFiller : MonoBehaviour
                 StopAllCoroutines();
             }
         }
+        if (Input.GetKeyDown("r")) _grid.SetRandomType();
+
     }
     /// OnGUI is used to display all the scripted graphic user interface elements in the Unity loop
     private void OnGUI()
@@ -96,7 +98,6 @@ public class BruteForceFiller : MonoBehaviour
             GUI.Label(new Rect(padding, (padding + labelHeight) * ++counter, labelWidth, labelHeight),
                 $"Grid {VGrid.NumberOfBlocks} Blocks added");
         }
-        Debug.LogWarning("here");
         for (int i = 0; i < Mathf.Min(orderedEfficiencyIndex.Count,10); i++)
         {
             string text = $"Seed: {orderedEfficiencyIndex[i]} Efficiency: {_efficiencies[orderedEfficiencyIndex[i]]}";
@@ -123,6 +124,7 @@ public class BruteForceFiller : MonoBehaviour
     /// <returns>returns true if it managed to add the block to the grid</returns>
     private bool TryAddRandomBlock()
     {
+        _grid.SetRandomType();
         VGrid.AddBlock(RandomIndex(), RandomRotation());
         bool blockAdded = VGrid.TryAddCurrentBlocksToGrid();
         VGrid.PurgeUnplacedBlocks();
@@ -143,6 +145,9 @@ public class BruteForceFiller : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Brute force random blocks in the available grid
+    /// </summary>
     private void BruteForceStep()
     {
         VGrid.PurgeAllBlocks();
@@ -161,6 +166,10 @@ public class BruteForceFiller : MonoBehaviour
         
     }
 
+    /// <summary>
+    /// Brute force an entire iteration every tick
+    /// </summary>
+    /// <returns></returns>
     IEnumerator BruteForceEngine()
     {
         while (_iterationCounter < _iterations)

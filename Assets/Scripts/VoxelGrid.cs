@@ -133,4 +133,13 @@ public class VoxelGrid
         }
         _blocks = new List<Block>();
     }
+
+    /// <summary>
+    /// Set a random PatternType based on all the possible patterns in te PatternType Enum.
+    /// </summary>
+    public void SetRandomType()
+    {
+        PatternType[] values = System.Enum.GetValues(typeof(PatternType)).Cast<PatternType>().ToArray();
+        _currentPattern = (PatternType)values[Random.Range(0, values.Length)];
+    }
 }

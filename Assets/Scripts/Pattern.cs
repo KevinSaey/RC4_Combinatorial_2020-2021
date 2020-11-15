@@ -4,9 +4,9 @@ using System.Linq;
 using UnityEngine;
 
 /// <summary>
-/// PatternType can be refered to by name. These can become your block names to make your code more readible. This enum can also be casted to it's assigned integer values
+/// PatternType can be refered to by name. These can become your block names to make your code more readible. This enum can also be casted to it's assigned integer values. Only define used block types.
 /// </summary>
-public enum PatternType { PatternA = 0, PatternB = 1, PatternC = 2 }
+public enum PatternType { PatternA = 0, PatternB = 1 }
 
 /// <summary>
 /// The pattern manager is a singleton class. This means there is only one instance of the PatternManager class in the entire project and it can be refered to anywhere withing the project
@@ -45,6 +45,20 @@ public class PatternManager
                 },
                 PatternType.PatternA
                 );
+
+        //Define pattern B
+        AddPattern(
+            new List<Vector3Int>()
+                {
+                    new Vector3Int(0, 0, 0),
+                    new Vector3Int(0, 1, 0),
+                    new Vector3Int(0, 2, 0),
+                    new Vector3Int(0, 3, 0),
+                    new Vector3Int(0, 4, 0)
+                },
+                PatternType.PatternB
+                );
+
     }
     /// <summary>
     /// Use this method rather than adding directly to the _patterns field. This method will check if the pattern is valid and can be added to the list. Invalid input will be refused.

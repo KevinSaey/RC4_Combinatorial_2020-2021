@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -35,5 +34,16 @@ public static class Util
         if (index.y >= grid.GridDimensions.y) return false;
         if (index.z >= grid.GridDimensions.z) return false;
         return true;
+    }
+
+    public static Color RandomColor
+    {
+        get
+        {
+            float r = Random.Range(0, 255) / 255f;
+            float g = Random.Range(0, 255) / 255f;
+            float b = Random.Range(0, 255) / 255f;
+            return new Color(r, g, b);
+        }
     }
 }

@@ -23,9 +23,9 @@ public class Voxel
         }
     }*/
 
-   /// <summary>
-   /// Get and set the status of the voxel. When setting the status, the linked gameobject will be enable or disabled depending on the state.
-   /// </summary>
+    /// <summary>
+    /// Get and set the status of the voxel. When setting the status, the linked gameobject will be enable or disabled depending on the state.
+    /// </summary>
     public VoxelState Status
     {
         get
@@ -44,13 +44,19 @@ public class Voxel
     /// </summary>
     /// <param name="index">index of the voxel</param>
     /// <param name="goVoxel">prefab of the voxel gameobject</param>
-    public Voxel (Vector3Int index, GameObject goVoxel, VoxelGrid grid)
+    public Voxel(Vector3Int index, GameObject goVoxel, VoxelGrid grid)
     {
         _grid = grid;
         _index = index;
         _goVoxel = GameObject.Instantiate(goVoxel, _centre, Quaternion.identity);
         _goVoxel.GetComponent<VoxelTrigger>().TriggerVoxel = this;
-        _goVoxel.transform.localScale = Vector3.one * _grid.VoxelSize*0.95f;
+        _goVoxel.transform.localScale = Vector3.one * _grid.VoxelSize * 0.95f;
         Status = VoxelState.Dead;
     }
+
+    public void SetColor(Color color)
+    {
+        _goVoxel.GetComponent<MeshRenderer>().material.color = color;
+    }
+
 }

@@ -16,10 +16,10 @@ public class Block
     public Vector3Int Anchor;
     public Quaternion Rotation;
     private bool _placed = false;
-/// <summary>
-/// Get the current state of the block. Can be Valid, Intersecting, OutOfBound or Placed
-/// </summary>
-    public BlockState State 
+    /// <summary>
+    /// Get the current state of the block. Can be Valid, Intersecting, OutOfBound or Placed
+    /// </summary>
+    public BlockState State
     {
         get
         {
@@ -54,7 +54,7 @@ public class Block
         Voxels = new List<Voxel>();
         foreach (var index in _pattern.Indices)
         {
-            if (Util.TryOrientIndex(index, Anchor, Rotation,_grid, out var newIndex))
+            if (Util.TryOrientIndex(index, Anchor, Rotation, _grid, out var newIndex))
             {
                 Voxels.Add(VoxelGrid.Voxels[newIndex.x, newIndex.y, newIndex.z]);
             }
@@ -67,13 +67,18 @@ public class Block
     /// <returns>Returns true if it managed to activate all the voxels in the grid</returns>
     public bool ActivateVoxels()
     {
-        if(State!= BlockState.Valid)
+        if (State != BlockState.Valid)
         {
             Debug.LogWarning("Block can't be placed");
             return false;
         }
+        Color randomCol = Util.RandomColor;
+
         foreach (var voxel in Voxels)
+        {
             voxel.Status = VoxelState.Alive;
+            voxel.SetColor(randomCol);
+        }
         _placed = true;
         return true;
     }
