@@ -22,6 +22,7 @@ public class BoundingMesh
         _colliders = boundingMeshes.Select(g => g.GetComponent<Collider>());
 
         Bounds meshBounds = new Bounds();
+
         foreach (var collider in _colliders)
         {
             meshBounds.Encapsulate(collider.bounds);

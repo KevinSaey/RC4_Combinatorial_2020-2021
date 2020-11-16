@@ -7,7 +7,7 @@ public class BruteForceFiller : MonoBehaviour
 {
     private float _voxelSize = 0.2f;
     private int _voxelOffset = 2;
-    private int _triesPerIteration = 25000;
+    private int _triesPerIteration = 2500;
     private int _iterations = 100;
 
     private int _tryCounter = 0;
@@ -15,6 +15,8 @@ public class BruteForceFiller : MonoBehaviour
 
     private bool generating = false;
     private int _seed = 0;
+
+    private List<int> test = new List<int>();
 
     private Dictionary<int, float> _efficiencies = new Dictionary<int, float>();
     private List<int> orderedEfficiencyIndex = new List<int>();
@@ -136,6 +138,7 @@ public class BruteForceFiller : MonoBehaviour
         _grid.SetRandomType();
         _grid.AddBlock(RandomIndex(), RandomRotation());
         bool blockAdded = _grid.TryAddCurrentBlocksToGrid();
+        Debug.Log("HEllo");
         _grid.PurgeUnplacedBlocks();
         return blockAdded;
     }
@@ -167,6 +170,7 @@ public class BruteForceFiller : MonoBehaviour
             _tryCounter++;
         }
 
+        //Keep track of the most efficient seeds
         _efficiencies.Add(_seed, _grid.Efficiency);
         orderedEfficiencyIndex = _efficiencies.Keys.OrderByDescending(k => _efficiencies[k]).Take(11).ToList();
         if (orderedEfficiencyIndex.Count == 11)
